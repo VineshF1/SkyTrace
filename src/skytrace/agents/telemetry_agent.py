@@ -13,10 +13,32 @@ from typing import Any, Callable, Awaitable, Dict
 from google.adk import Agent
 from google.adk.tools import BaseTool
 
-logger = logging.getLogger(__name__)
-
 # Type for MCP tool functions
 MCPToolFunc = Callable[..., Awaitable[dict]]
+
+
+def _parse_mcp_result(result: dict) -> dict:
+    """Safely parse an MCP tool result as JSON.
+
+    MCP tools return TextContent, but errors come back as plain text
+    (not JSON).  This helper handles both cases so callers don't choke
+    on non-JSON error messages.
+
+    Returns:
+        ``{"success": True, "data": <parsed JSON>, "error": None}``
+        or ``{"success": False, "data": None, "error": <raw text>}``
+    """
+    raw_text = ""
+    try:
+        raw_text = result["content"][0]["text"]
+    except (KeyError, IndexError, TypeError):
+        return {"success": False, "data": None, "error": "MCP tool returned no content"}
+    try:
+        return {"success": True, "data": json.loads(raw_text), "error": None}
+    except json.JSONDecodeError:
+        return {"success": False, "data": None, "error": raw_text}
+
+logger = logging.getLogger(__name__)
 
 # Earth radius in km (WGS84 mean)
 EARTH_RADIUS_KM = 6371.0
@@ -144,7 +166,10 @@ class TelemetryAgent(Agent):
                 if not tool:
                     return {"success": False, "data": None, "error": "get_satellites_above tool unavailable"}
                 result = await tool(lat=lat, lon=lon, alt=alt, radius_deg=radius_deg, category=category)
-                return {"success": True, "data": json.loads(result["content"][0]["text"]), "error": None}
+                parsed = _parse_mcp_result(result)
+                if not parsed["success"]:
+                    return parsed
+                return {"success": True, "data": parsed["data"], "error": None}
             else:
                 return {"success": False, "data": None, "error": f"Unknown telemetry method: {method}"}
         except Exception as exc:
@@ -158,7 +183,10 @@ class TelemetryAgent(Agent):
             return {"success": False, "data": None, "error": "get_tle tool unavailable"}
         
         result = await tool(norad_id=norad_id)
-        return {"success": True, "data": json.loads(result["content"][0]["text"]), "error": None}
+        parsed = _parse_mcp_result(result)
+        if not parsed["success"]:
+            return parsed
+        return {"success": True, "data": parsed["data"], "error": None}
 
     async def _get_position(self, request: dict) -> dict:
         """Get a satellite's current position from the MCP server."""
@@ -172,7 +200,10 @@ class TelemetryAgent(Agent):
             lon=request["lon"],
             alt=request.get("alt", 0),
         )
-        return {"success": True, "data": json.loads(result["content"][0]["text"]), "error": None}
+        parsed = _parse_mcp_result(result)
+        if not parsed["success"]:
+            return parsed
+        return {"success": True, "data": parsed["data"], "error": None}
 
     async def _get_passes(self, request: dict) -> dict:
         """Get upcoming visible passes from the MCP server."""
@@ -187,7 +218,10 @@ class TelemetryAgent(Agent):
             alt=request.get("alt", 0),
             days=request.get("days", 7),
         )
-        return {"success": True, "data": json.loads(result["content"][0]["text"]), "error": None}
+        parsed = _parse_mcp_result(result)
+        if not parsed["success"]:
+            return parsed
+        return {"success": True, "data": parsed["data"], "error": None}
 
     async def _geocode_place(self, request: dict) -> dict:
         """Look up a place name to get its coordinates from the MCP server."""
@@ -196,7 +230,10 @@ class TelemetryAgent(Agent):
             return {"success": False, "data": None, "error": "geocode_place tool unavailable"}
         
         result = await tool(place_name=request["place_name"])
-        return {"success": True, "data": json.loads(result["content"][0]["text"]), "error": None}
+        parsed = _parse_mcp_result(result)
+        if not parsed["success"]:
+            return parsed
+        return {"success": True, "data": parsed["data"], "error": None}
 
     async def _reverse_geocode(self, request: dict) -> dict:
         """Look up coordinates to get a place name from the MCP server."""
@@ -205,7 +242,10 @@ class TelemetryAgent(Agent):
             return {"success": False, "data": None, "error": "reverse_geocode tool unavailable"}
         
         result = await tool(lat=request["lat"], lon=request["lon"])
-        return {"success": True, "data": json.loads(result["content"][0]["text"]), "error": None}
+        parsed = _parse_mcp_result(result)
+        if not parsed["success"]:
+            return parsed
+        return {"success": True, "data": parsed["data"], "error": None}
 
     async def _distance(self, request: dict) -> dict:
         """Calculate how far a satellite is from an observer.
