@@ -1,0 +1,61 @@
+[project]
+name = "skytrace"
+version = "0.1.0"
+description = "SkyTrace - Multi-agent satellite tracking with MCP, TUI, and real-time orbital mechanics"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "google-adk>=0.1.0",
+    "mcp>=1.0.0",
+    "sgp4>=2.22",
+    "skyfield>=1.48",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "tenacity>=8.2.0",
+    "textual>=0.52.0",
+    "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "ruff>=0.5.0",
+    "mypy>=1.10.0",
+    "pre-commit>=3.7.0",
+]
+
+[build-system]
+requires = ["setuptools>=69.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "T20", "ARG", "PTH", "ERA", "PL", "TRY"]
+ignore = ["S101", "TRY003"]
+fixable = ["F", "I", "W", "E", "UP", "B", "C4", "SIM", "T20", "ARG", "PTH", "ERA", "PL", "TRY"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+strict_equality = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
