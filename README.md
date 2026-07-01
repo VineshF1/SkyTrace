@@ -3,7 +3,7 @@
 
 Multi-agent satellite position tracking system with MCP, and real-time orbital mechanics.
 
-Ask questions in natural language — `"Where is the ISS from Mumbai?"`, `"List satellites above New York City?"`, `"How far is Hubble from London?"` — and SkyTraceAI answers with live orbital data.
+Ask questions in natural language — `"Where is the ISS from Mumbai?"`, `"List satellites above New York City?"`, `"How far is Hubble from London?"` — and SkyTrace answers with live orbital data.
 
 ---
 
