@@ -1,5 +1,4 @@
 # SkyTrace
-*A submission for the Kaggle AI Agents Capstone Project — **Freestyle Track***
 
 Multi-agent satellite position tracking system with MCP, and real-time orbital mechanics.
 
